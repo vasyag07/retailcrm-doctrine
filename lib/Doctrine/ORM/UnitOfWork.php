@@ -35,6 +35,7 @@ use Doctrine\Common\Persistence\ObjectManagerAware;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Proxy\Proxy;
 
+use Doctrine\ORM\Event\CleanPostFlushEventArgs;
 use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Event\PreFlushEventArgs;
@@ -354,6 +355,7 @@ class UnitOfWork implements PropertyChangedListener
                 $this->orphanRemovals)) {
             $this->dispatchOnFlushEvent();
             $this->dispatchPostFlushEvent();
+            $this->dispatchCleanPostFlushEvent();
 
             return; // Nothing to do.
         }
@@ -437,6 +439,8 @@ class UnitOfWork implements PropertyChangedListener
         $this->visitedCollections =
         $this->scheduledForSynchronization =
         $this->orphanRemovals = array();
+
+        $this->dispatchCleanPostFlushEvent();
     }
 
     /**
@@ -3323,6 +3327,13 @@ class UnitOfWork implements PropertyChangedListener
     {
         if ($this->evm->hasListeners(Events::postFlush)) {
             $this->evm->dispatchEvent(Events::postFlush, new PostFlushEventArgs($this->em));
+        }
+    }
+
+    private function dispatchCleanPostFlushEvent()
+    {
+        if ($this->evm->hasListeners(Events::cleanPostFlush)) {
+            $this->evm->dispatchEvent(Events::cleanPostFlush, new CleanPostFlushEventArgs($this->em));
         }
     }
 

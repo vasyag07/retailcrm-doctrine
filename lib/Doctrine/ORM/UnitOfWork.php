@@ -27,6 +27,7 @@ use Doctrine\Common\Persistence\ObjectManagerAware;
 use Doctrine\Common\PropertyChangedListener;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\Cache\Persister\CachedPersister;
+use Doctrine\ORM\Event\CleanPostFlushEventArgs;
 use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Event\ListenersInvoker;
 use Doctrine\ORM\Event\OnFlushEventArgs;
@@ -355,6 +356,7 @@ class UnitOfWork implements PropertyChangedListener
                 $this->orphanRemovals)) {
             $this->dispatchOnFlushEvent();
             $this->dispatchPostFlushEvent();
+            $this->dispatchCleanPostFlushEvent();
 
             return; // Nothing to do.
         }
@@ -430,6 +432,8 @@ class UnitOfWork implements PropertyChangedListener
         $this->dispatchPostFlushEvent();
 
         $this->postCommitCleanup($entity);
+
+        $this->dispatchCleanPostFlushEvent();
     }
 
     /**
@@ -3393,6 +3397,13 @@ class UnitOfWork implements PropertyChangedListener
     {
         if ($this->evm->hasListeners(Events::postFlush)) {
             $this->evm->dispatchEvent(Events::postFlush, new PostFlushEventArgs($this->em));
+        }
+    }
+
+    private function dispatchCleanPostFlushEvent()
+    {
+        if ($this->evm->hasListeners(Events::cleanPostFlush)) {
+            $this->evm->dispatchEvent(Events::cleanPostFlush, new CleanPostFlushEventArgs($this->em));
         }
     }
 

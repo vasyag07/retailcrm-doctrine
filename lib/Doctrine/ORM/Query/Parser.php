@@ -3063,7 +3063,11 @@ class Parser
         $this->match(Lexer::T_OPEN_PARENTHESIS);
 
         if ($this->lexer->isNextToken(Lexer::T_SELECT)) {
-            $inExpression->subselect = $this->Subselect();
+            $inExpression->subselect = [$this->Subselect()];
+            while ($this->lexer->isNextToken(Lexer::T_UNION)) {
+                $this->match(Lexer::T_UNION);
+                $inExpression->subselect[] = $this->Subselect();
+            }
         } else {
             $literals = array();
             $literals[] = $this->InParameter();

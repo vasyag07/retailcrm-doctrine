@@ -2048,7 +2048,7 @@ class SqlWalker implements TreeWalker
         $sql = $this->walkArithmeticExpression($inExpr->expression) . ($inExpr->not ? ' NOT' : '') . ' IN (';
 
         $sql .= ($inExpr->subselect)
-            ? $this->walkSubselect($inExpr->subselect)
+            ? implode(' UNION ', array_map(function ($subselect) {return $this->walkSubselect($subselect);}, $inExpr->subselect))
             : implode(', ', array_map(array($this, 'walkInParameter'), $inExpr->literals));
 
         $sql .= ')';
